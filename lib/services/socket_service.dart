@@ -18,7 +18,7 @@ class SocketService with ChangeNotifier {
 
   void _initConfig() {
     // Dart client
-    this._socket = IO.io('http://192.168.68.108:3000/', {
+    this._socket = IO.io('https://zero2-flutter-socket-io.onrender.com', {
       'transports': ['websocket'],
       'autoConnect': true
     });
