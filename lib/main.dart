@@ -21,7 +21,10 @@ class MyApp extends StatelessWidget {
         routes: {
           'home': ( _ ) => HomePage(),
           'status': ( _ ) => StatusPage()
-        }
+        },
+        theme: ThemeData(
+          fontFamily: 'ComicNeue'
+        )
       ),
     );
   }

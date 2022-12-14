@@ -16,7 +16,10 @@ class HomePage extends StatefulWidget {
 
 class _HomePageState extends State<HomePage> {
 
+  static const MAX_BAND_ALLOWED = 8;
   List<Band> bands = [];
+  
+  
 
   @override
   void initState() {
@@ -73,7 +76,8 @@ class _HomePageState extends State<HomePage> {
       floatingActionButton: FloatingActionButton(
         child: Icon(Icons.add),
         elevation: 1,
-        onPressed: addNewBand,
+        onPressed: (_isAddNewBandAllowed()) ? addNewBand : null,
+        backgroundColor: (_isAddNewBandAllowed()) ? Colors.blue : Colors.blue.shade200,
       ),
 
    );
@@ -155,64 +159,96 @@ class _HomePageState extends State<HomePage> {
 
   void addBandToList( String name ) {
 
+
     if (name.length > 1 ) {
       final socketService = Provider.of<SocketService>(context, listen: false);
       socketService.socket.emit('add-band', ( {'name': name} ));
     }
-    
-
+  
     Navigator.pop(context);
   }
 
   Widget _showGraph() {
-    Map<String, double> dataMap = {};
+    Map<String, double> dataMap = { '': 0 };
     bands.forEach(( band ) {
       dataMap.putIfAbsent(band.name, () => band.votes.toDouble());
+      if (dataMap.length > 1) {
+        dataMap.remove('');
+      }
     });
-
-    final List<Color> colorList = [
-      Colors.blue.shade100,
-      Colors.blue.shade200,
-      Colors.pink.shade100,
-      Colors.pink.shade200,
-      Colors.yellow.shade100,
-      Colors.yellow.shade200
-    ];
-
     return Container(
       width: double.infinity,
-      height: 200.0,
-      child: PieChart(
-        dataMap: dataMap,
-        animationDuration: Duration(milliseconds: 800),
-        chartLegendSpacing: 32,
-        chartRadius: MediaQuery.of(context).size.width / 3.2,
-        colorList: colorList,
-        initialAngleInDegree: 0,
-        chartType: ChartType.disc,
-        ringStrokeWidth: 32,
-        //centerText: "HYBRID",
-        legendOptions: LegendOptions(
-        showLegendsInRow: false,
-        legendPosition: LegendPosition.right,
-        showLegends: true,
-        legendShape: BoxShape.circle,
-        legendTextStyle: TextStyle(
-          fontWeight: FontWeight.bold,
-        ),
-      ),
-      chartValuesOptions: ChartValuesOptions(
-        showChartValueBackground: true,
-        showChartValues: true,
-        showChartValuesInPercentage: false,
-        showChartValuesOutside: false,
-        decimalPlaces: 1,
-      ),
-      // gradientList: ---To add gradient colors---
-      // emptyColorGradient: ---Empty Color gradient---
-      )
+      child: (dataMap.isNotEmpty) ? _buildChart(dataMap) : _buildLoading()
     ); 
   }
 
+  Widget _buildLoading() {
+    return Column(
+        mainAxisSize: MainAxisSize.max,
+        mainAxisAlignment: MainAxisAlignment.end,
+        children: [
+          Row(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              CircularProgressIndicator()
+            ],
+          ),
+          
+        ],
+      );
+  }
 
+  Widget _buildChart( Map<String, double> dataMap ) {
+
+    final List<Color> colorList = [
+      Colors.deepOrangeAccent.shade200,
+      Colors.orange.shade200,
+      Colors.green.shade200,
+      Colors.red.shade200,
+      Colors.blue.shade200,
+      Colors.purple.shade200,
+      Colors.yellow.shade200,
+      Colors.pink.shade200
+    ];
+
+    return Column(
+      children: [ PieChart(
+          emptyColor: Colors.grey.shade300,
+          dataMap: dataMap,
+          animationDuration: Duration(milliseconds: 1500),
+          chartLegendSpacing: 32,
+          chartRadius: MediaQuery.of(context).size.width / 3.2,
+          colorList: colorList,
+          initialAngleInDegree: 0,
+          chartType: ChartType.disc,
+          ringStrokeWidth: 32,
+          legendOptions: LegendOptions(
+            showLegendsInRow: false,
+            legendPosition: LegendPosition.right,
+            showLegends: (dataMap.length > 1),
+            legendShape: BoxShape.circle,
+            legendTextStyle: TextStyle(
+              fontWeight: FontWeight.bold,
+            ),
+          ),
+          chartValuesOptions: ChartValuesOptions(
+            showChartValueBackground: false,
+            showChartValues: true,
+            showChartValuesInPercentage: false,
+            showChartValuesOutside: false,
+            decimalPlaces: 0,
+          )
+        ),
+        SizedBox(height: 10.0),
+        (_isAddNewBandAllowed())
+        ? Text('Use + button to add a new band', style: TextStyle(color: Colors.green, fontSize: 16.0, fontWeight: FontWeight.bold))
+        : Text('You cannot add more bands...', style: TextStyle(color: Colors.red, fontSize: 16.0,  fontWeight: FontWeight.bold)),
+        SizedBox(height: 20.0)
+      ]
+    );
+  }
+
+  bool _isAddNewBandAllowed() {
+    return bands.length < MAX_BAND_ALLOWED;
+  }
 }
